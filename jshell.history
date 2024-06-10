@@ -1,0 +1,22 @@
+EXPRESSION#>clear();
+VAR#>String[] args = "  ".split(",");
+EXPRESSION#>args
+STATEMENT#>System.out.println(args[0]);
+EXPRESSION#>args
+VAR#>String[] args = "agregar algo".split(" ");
+EXPRESSION#>clear();
+VAR#>String[] args = "  ".split(",");
+EXPRESSION#>args
+STATEMENT#>System.out.println(args[0]);
+EXPRESSION#>args
+VAR#>String[] args = "agregar algo".split(" ");
+EXPRESSION#>clear();
+VAR#>String[] args = "  ".split(",");
+EXPRESSION#>args
+STATEMENT#>System.out.println(args[0]);
+EXPRESSION#>args
+VAR#>String[] args = "agregar algo".split(" ");
+CMD#>/reload -restore
+VAR#>String[] args = "agregar algo".split(" ");
+EXPRESSION#>args
+VAR#>String[] args1 = "agregar algo".split(" ");
