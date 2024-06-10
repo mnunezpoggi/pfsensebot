@@ -23,7 +23,7 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-                  sh "docker run -v $PFSENSEBOT_CONFIG:/usr/src/app/config --name=pfsensebot -d --restart=always pfsensebot:main"
+                  sh "docker run --name=pfsensebot -d --restart=always pfsensebot:main"
             }
         }
 
