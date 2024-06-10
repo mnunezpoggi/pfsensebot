@@ -58,7 +58,7 @@ public class Pfsensebot implements MessageListener {
                     //                .sslContext(sslContext)
                     .build();
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("http://192.168.0.101/api/v1/user"))
+                    .uri(URI.create(buildURL("/api/v1/user")))
                     .header("Authorization", RestUtils.basicAuth("admin", "thaadminrlz"))
                     .build();
 
@@ -120,7 +120,7 @@ public class Pfsensebot implements MessageListener {
                         //                .sslContext(sslContext)
                         .build();
                 HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create("http://192.168.0.101/api/v1/user"))
+                        .uri(URI.create(buildURL("/api/v1/user")))
                         .header("Authorization", RestUtils.basicAuth("admin", "thaadminrlz"))
                         .POST(HttpRequest.BodyPublishers.ofString(body))
                         .build();
@@ -145,6 +145,7 @@ public class Pfsensebot implements MessageListener {
     
     public String buildURL(String path){
         ConfigurationHolder config = ConfigurationHolder.getInstance();
+        return config.get("PFSENSE_IP") + path ;
     }
 
 }
