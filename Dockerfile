@@ -1,7 +1,7 @@
-FROM sapmachine:17
+FROM debian:latest
 
 RUN apt-get update \
-  && apt-get install -y ca-certificates curl git sshpass openssh-client rsync --no-install-recommends \
+  && apt-get install -y openjdk-17-jdk ca-certificates curl git sshpass openssh-client rsync --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 # common for all images
