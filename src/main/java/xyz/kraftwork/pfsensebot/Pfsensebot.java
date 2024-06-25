@@ -4,13 +4,13 @@
 package xyz.kraftwork.pfsensebot;
 
 import com.google.gson.Gson;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -18,8 +18,6 @@ import java.util.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import xyz.kraftwork.chatbot.ChatInfo;
 import xyz.kraftwork.chatbot.Chatbot;
-import xyz.kraftwork.chatbot.Command;
-import xyz.kraftwork.chatbot.CommandListener;
 import xyz.kraftwork.chatbot.MessageListener;
 import xyz.kraftwork.chatbot.utils.ConfigurationHolder;
 import xyz.kraftwork.pfsensebot.utils.RestUtils;
@@ -28,7 +26,7 @@ public class Pfsensebot implements MessageListener {
 
     private static final String GET_USERS = "pfsense:get_users";
     private static final String CREATE_USER = "pfsense:create_user";
-
+    private static final String REMOVE_USER = "pfsense:remove_user";
     private final Chatbot bot;
 
     public Pfsensebot() {
@@ -47,28 +45,45 @@ public class Pfsensebot implements MessageListener {
             case CREATE_USER -> {
                 createUser(info, StringUtils.stripAll(args));
             }
+            case REMOVE_USER -> {
+                removeUser(info, StringUtils.stripAll(args));
+            }
         }
         return null;
+    }
+
+    private void removeUser(ChatInfo info, String[] args) {
+        if (args.length != 3) {
+            info.setMessage(String.format("Incorrect number of arguments, expecting 3, got %d", args.length));
+            bot.sendMessage(info);
+            return;
+        }
+
+    }
+
+    private ArrayList<Map> getUsers() throws IOException, InterruptedException {
+        HttpClient client = HttpClient.newBuilder()
+                // .sslContext(sslContext)
+                .build();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(buildURL("/api/v1/user")))
+                .header("Authorization", RestUtils.basicAuth(ConfigurationHolder.getInstance().get("PFSENSE_USERNAME"), ConfigurationHolder.getInstance().get("PFSENSE_PASSWORD")))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        String json = (response.body());
+        Gson gson = new Gson();
+        Map map = gson.fromJson(json, Map.class);
+
+        return (ArrayList<Map>) map.get("data");
     }
 
     private void getUsers(ChatInfo info) {
         System.out.println("====== ON GET USERS");
         try {
-            HttpClient client = HttpClient.newBuilder()
-                    //                .sslContext(sslContext)
-                    .build();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(buildURL("/api/v1/user")))
-                    .header("Authorization", RestUtils.basicAuth("admin", "thaadminrlz"))
-                    .build();
 
-            HttpResponse<String> response
-                    = client.send(request, HttpResponse.BodyHandlers.ofString());
-            String json = (response.body());
-            Gson gson = new Gson();
-            Map map = gson.fromJson(json, Map.class);
             StringBuilder result = new StringBuilder();
-            for (Map user : (ArrayList<Map>) map.get("data")) {
+            for (Map user : getUsers()) {
                 System.out.println(user);
                 result.append(user.get("name"));
                 result.append(", ");
@@ -105,19 +120,19 @@ public class Pfsensebot implements MessageListener {
                 String username = firstName + "." + lastName + "." + i;
                 String pass = UUID.randomUUID().toString();
                 String body = String.format("""
-                                                {
-                                                  "authorizedkeys": "",
-                                                  "cert": [],
-                                                  "descr": "auto generated",
-                                                  "disabled": false,
-                                                  "expires": "",
-                                                  "ipsecpsk": "",
-                                                  "password": "%s",
-                                                  "priv": ["user-services-captiveportal-login"],
-                                                  "username": "%s"
-                                                }""", pass, username);
+                        {
+                          "authorizedkeys": "",
+                          "cert": [],
+                          "descr": "auto generated",
+                          "disabled": false,
+                          "expires": "",
+                          "ipsecpsk": "",
+                          "password": "%s",
+                          "priv": ["user-services-captiveportal-login"],
+                          "username": "%s"
+                        }""", pass, username);
                 HttpClient client = HttpClient.newBuilder()
-                        //                .sslContext(sslContext)
+                        // .sslContext(sslContext)
                         .build();
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(buildURL("/api/v1/user")))
@@ -125,8 +140,7 @@ public class Pfsensebot implements MessageListener {
                         .POST(HttpRequest.BodyPublishers.ofString(body))
                         .build();
 
-                HttpResponse<String> response
-                        = client.send(request, HttpResponse.BodyHandlers.ofString());
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
                 String json = (response.body());
                 Gson gson = new Gson();
                 Map map = gson.fromJson(json, Map.class);
@@ -142,10 +156,10 @@ public class Pfsensebot implements MessageListener {
             bot.sendMessage(info);
         }
     }
-    
-    public String buildURL(String path){
+
+    public String buildURL(String path) {
         ConfigurationHolder config = ConfigurationHolder.getInstance();
-        return config.get("PFSENSE_IP") + path ;
+        return config.get("PFSENSE_IP") + path;
     }
 
 }
