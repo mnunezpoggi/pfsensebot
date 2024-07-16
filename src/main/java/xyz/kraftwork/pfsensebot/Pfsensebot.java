@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -129,7 +130,7 @@ public class Pfsensebot implements MessageListener {
             System.out.println("uh oh");
             info.setMessage(ex.getMessage());
             bot.sendMessage(info);
-            ex.printStackTrace();
+            System.out.println(Arrays.toString(ex.getStackTrace()));
         }
     }
 
