@@ -10,11 +10,16 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import xyz.kraftwork.chatbot.ChatInfo;
 import xyz.kraftwork.chatbot.Chatbot;
@@ -58,7 +63,37 @@ public class Pfsensebot implements MessageListener {
             bot.sendMessage(info);
             return;
         }
-
+        String name1 = StringUtils.lowerCase(args[1]);
+        String name2 = StringUtils.lowerCase(args[2]);
+        String username = String.format("%s.%s", name1, name2);
+        try {
+            List<Map> filtered = (List<Map>) CollectionUtils.select(getUsers(), (item) -> {
+                String[] strippedName = ((Map<String, String>) item).get("name").split("\\.");
+                return name1.equals(strippedName[0]) && name2.equals(strippedName[1]);
+            });
+            System.out.println(filtered);
+            for (Map user : filtered) {
+                String foundUsername = (String) user.get("name");
+                info.setMessage(String.format("Removing %s", foundUsername));
+                bot.sendMessage(info);
+                HttpClient client = HttpClient.newBuilder()
+                        // .sslContext(sslContext)
+                        .build();
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(buildURL("/api/v1/user?username=" + foundUsername)))
+                        .header("Authorization", RestUtils.basicAuth("admin", "thaadminrlz"))
+                        .DELETE()
+                        .build();
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                String json = (response.body());
+                Gson gson = new Gson();
+                Map map = gson.fromJson(json, Map.class);
+                
+            }
+        } catch (IOException | InterruptedException e) {
+            info.setMessage(e.getMessage());
+            bot.sendMessage(info);
+        }
     }
 
     private ArrayList<Map> getUsers() throws IOException, InterruptedException {
@@ -92,7 +127,8 @@ public class Pfsensebot implements MessageListener {
             bot.sendMessage(info);
         } catch (Exception ex) {
             System.out.println("uh oh");
-            Logger.getLogger(Pfsensebot.class.getName()).log(Level.SEVERE, null, ex);
+            info.setMessage(ex.getMessage());
+            ex.printStackTrace();
         }
     }
 
@@ -111,6 +147,10 @@ public class Pfsensebot implements MessageListener {
             String firstName = args[1];
             String lastName = args[2];
             int number = 1;
+            LocalDate date = LocalDate.now().plusYears(1);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+            String formattedDate = date.format(formatter);
+            System.out.println(formattedDate);
             try {
                 number = Integer.parseInt(args[3]);
             } catch (Exception ex) {
@@ -125,12 +165,12 @@ public class Pfsensebot implements MessageListener {
                           "cert": [],
                           "descr": "auto generated",
                           "disabled": false,
-                          "expires": "",
+                          "expires": "%s",
                           "ipsecpsk": "",
                           "password": "%s",
                           "priv": ["user-services-captiveportal-login"],
                           "username": "%s"
-                        }""", pass, username);
+                        }""", formattedDate, pass, username);
                 HttpClient client = HttpClient.newBuilder()
                         // .sslContext(sslContext)
                         .build();
