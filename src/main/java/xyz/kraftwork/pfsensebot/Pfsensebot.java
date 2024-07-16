@@ -128,6 +128,7 @@ public class Pfsensebot implements MessageListener {
         } catch (Exception ex) {
             System.out.println("uh oh");
             info.setMessage(ex.getMessage());
+            bot.sendMessage(info);
             ex.printStackTrace();
         }
     }
